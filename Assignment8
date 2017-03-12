@@ -1,0 +1,209 @@
+SAMPLE DATASET
+
+student_details.txt
+----------------------
+1,Rajiv,Reddy,21,Hyderabad,89
+2,siddarth,Battacharya,22,Kolkata,78
+1,Rajiv,Reddy,21,Hyderabad,89
+3,Rajesh,Khanna,22,Delhi,90
+4,Preethi,Agarwal,21,Pune,93
+5,Trupthi,Mohanthy,23,Bhuwaneshwar,75
+5,Trupthi,Mohanthy,23,Bhuwaneshwar,75
+6,Archana,Mishra,23,Chennai,87
+7,Komal,Nayak,24,trivendram,83
+8,Bharathi,Nambiayar,24,Chennai,72
+
+
+
+
+CONCAT:
+
+student_details= LOAD 'student_details.txt' USING PigStorage(',') AS ( id:int, first_name:chararray, last_name:chararray, age:int,city:chararray, gpa:int);
+
+concat_result= FOREACH student_details GENERATE CONCAT(first_name,' ',last_name);
+
+Output:
+
+(Rajiv Reddy)
+(siddarth nag Battacharya)
+(Rajesh kumar Khanna)
+(Preethi Agarwal)
+(Trupthi Mohanthy)
+(Archana suresh Mishra)
+(Komal Nayak)
+(Bharathi kumari Nambiayar)
+
+
+TOKENIZE:
+
+
+tokenize_result= FOREACH student_details GENERATE TOKENIZE(first_name);
+
+Output:
+
+({(Rajiv)})
+({(siddarth),(nag)})
+({(Rajesh),(kumar)})
+({(Preethi)})
+({(Trupthi)})
+({(Archana),(suresh)})
+({(Komal)})
+({(Bharathi),(kumari)})
+
+SUM:
+ 
+group_sum= GROUP student_details all;
+sum_result= FOREACH group_sum GENERATE SUM(student_details.gpa);
+DUMP sum_result;
+
+Output:
+
+(667)
+
+
+MIN
+
+group_min= GROUP student_details all;
+min_result= FOREACH group_min GENERATE MIN(student_details.gpa);
+DUMP min_result;
+
+Output:
+
+(72)
+
+MAX
+
+group_max= GROUP student_details all;
+max_result= FOREACH group_max GENERATE MAX(student_details.gpa);
+DUMP max_result;
+
+Output:
+              
+(93)
+
+LIMIT:
+
+result= FOREACH student_details GENERATE id,first_name,last_name;
+limit_result= LIMIT result 3;
+DUMP limit_result;
+
+Output:
+
+(1,Rajiv,Reddy)
+(2,siddarth nag,Battacharya)
+(3,Rajesh kumar,Khanna)
+
+
+STORE:
+
+sorted_names= ORDER student_details by first_name;
+STORE sorted_names INTO 'sorted_names';
+
+cat sorted_names/part-r-00000
+
+Output:
+
+6	Archana suresh	Mishra	23	Chennai	87
+8	Bharathi kumari	Nambiayar	24	Chennai	72
+7	Komal	Nayak	24	trivendram	83
+4	Preethi	Agarwal	21	Pune	93
+3	Rajesh kumar	Khanna	22	Delhi	90
+1	Rajiv	Reddy	21	Hyderabad	89
+5	Trupthi	Mohanthy	23	Bhuwaneshwar	75
+2	siddarth nag	Battacharya	22	Kolkata	78
+
+
+
+DISTINCT:
+
+distinct_result= DISTINCT student_details;
+DUMP distinct_result;
+
+Output:
+
+(1,Rajiv,Reddy,21,Hyderabad,89)
+(2,siddarth nag,Battacharya,22,Kolkata,78)
+(3,Rajesh kumar,Khanna,22,Delhi,90)
+(4,Preethi,Agarwal,21,Pune,93)
+(5,Trupthi,Mohanthy,23,Bhuwaneshwar,75)
+(6,Archana suresh,Mishra,23,Chennai,87)
+(7,Komal,Nayak,24,trivendram,83)
+(8,Bharathi kumari,Nambiayar,24,Chennai,72)
+
+
+
+
+FLATTEN:
+
+
+grp_res = GROUP student_details by age;
+DUMP grp_res;
+
+Output:
+
+(21,{(4,Preethi,Agarwal,21,Pune,93),(1,Rajiv,Reddy,21,Hyderabad,89)})
+(22,{(3,Rajesh kumar,Khanna,22,Delhi,90),(2,siddarth nag,Battacharya,22,Kolkata,78)})
+(23,{(6,Archana suresh,Mishra,23,Chennai,87),(5,Trupthi,Mohanthy,23,Bhuwaneshwar,75)})
+(24,{(8,Bharathi kumari,Nambiayar,24,Chennai,72),(7,Komal,Nayak,24,trivendram,83)})
+
+
+flatten_res= FOREACH grp_res GENERATE $0, FLATTEN($1);
+DUMP flatten_res;
+
+Output:
+
+
+(21,4,Preethi,Agarwal,21,Pune,93)
+(21,1,Rajiv,Reddy,21,Hyderabad,89)
+(22,3,Rajesh kumar,Khanna,22,Delhi,90)
+(22,2,siddarth nag,Battacharya,22,Kolkata,78)
+(23,6,Archana suresh,Mishra,23,Chennai,87)
+(23,5,Trupthi,Mohanthy,23,Bhuwaneshwar,75)
+(24,8,Bharathi kumari,Nambiayar,24,Chennai,72)
+(24,7,Komal,Nayak,24,trivendram,83)
+
+
+IsEmpty:
+
+Second sample dataset
+student_contact
+
+1,999999999
+2,777777777
+3,555555555
+4,777888777
+7,555666677
+
+
+student_contact = LOAD 'student_contact.txt' USING PigStorage(',') AS (id:int,phone:chararray);
+cogrp= COGROUP student_details by id,student_contact by id;
+DUMP cogrp;
+
+Output:
+
+(1,{(1,Rajiv,Reddy,21,Hyderabad,89)},{(1,999999999)})
+(2,{(2,siddarth nag,Battacharya,22,Kolkata,78)},{(2,777777777)})
+(3,{(3,Rajesh kumar,Khanna,22,Delhi,90)},{(3,555555555)})
+(4,{(4,Preethi,Agarwal,21,Pune,93)},{(4,777888777)})
+(5,{(5,Trupthi,Mohanthy,23,Bhuwaneshwar,75)},{})
+(6,{(6,Archana suresh,Mishra,23,Chennai,87)},{})
+(7,{(7,Komal,Nayak,24,trivendram,83)},{(7,555666677)})
+(8,{(8,Bharathi kumari,Nambiayar,24,Chennai,72)},{})
+
+
+empty_res= FILTER cogrp by IsEmpty(student_contact);
+DUMP empty_res;
+
+Output:
+
+
+(5,{(5,Trupthi,Mohanthy,23,Bhuwaneshwar,75)},{})
+(6,{(6,Archana suresh,Mishra,23,Chennai,87)},{})
+(8,{(8,Bharathi kumari,Nambiayar,24,Chennai,72)},{})
+
+
+
+
+
+
+
